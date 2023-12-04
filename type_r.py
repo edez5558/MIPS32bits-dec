@@ -39,41 +39,83 @@ def registros(instruccion,op,sh,fnc):
 
     return str(op).zfill(6) + rs.zfill(5) + rt.zfill(5) + rd.zfill(5) + str(sh).zfill(5) + str(fnc).zfill(6)
 
-def detect(instr):
+def detect(instr,callback_error):
     instruccion = instr.elements[0]["value"]
 
     binary = ""
     if instruccion == "add":
+        try:
+            instr.verify(['instruction','register','register','register'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         op=000000
         sh=00000
         fnc=100000
         binary = registros(instr.elements,op,sh,fnc)
     elif instruccion == "and":
+        try:
+            instr.verify(['instruction','register','register','register'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         op=000000
         sh=00000
         fnc=100100
         binary = registros(instr.elements,op,sh,fnc)
     elif instruccion == "nor":
+        try:
+            instr.verify(['instruction','register','register','register'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         op=000000
         sh=00000
         fnc=100111
         binary = registros(instr.elements,op,sh,fnc)
     elif instruccion == "or":
+        try:
+            instr.verify(['instruction','register','register','register'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         op=000000
         sh=00000
         fnc=100101
         binary = registros(instr.elements,op,sh,fnc)
     elif instruccion == "slt":
+        try:
+            instr.verify(['instruction','register','register','register'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         op=000000
         sh=00000
         fnc=101010
         binary = registros(instr.elements,op,sh,fnc)
     elif instruccion == "sub":
+        try:
+            instr.verify(['instruction','register','register','register'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         op=000000
         sh=00000
         fnc=100010
         binary = registros(instr.elements,op,sh,fnc)
     elif instruccion == "nop":
+        try:
+            instr.verify(['instruction'])
+        except Exception as ex:
+            errstr = "({0}) {1}".format(instr.column,str(ex))
+            callback_error(errstr.format(instr.elements[0]["value"]))
+            return 'x' * 32
         return str(0).zfill(32)
     
     return binary

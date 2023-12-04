@@ -6,14 +6,17 @@ import little_lexer as Lexer
 
 print('Argument List', str(sys.argv))
 
+def error_handler(error):
+    print(error)
+
 def get_text_binary(instruction):
-    if binary_text := R.detect(instruction):
+    if binary_text := R.detect(instruction,error_handler):
         return binary_text
 
-    if binary_text := I.detect(instruction):
+    if binary_text := I.detect(instruction,error_handler):
         return binary_text
 
-    if binary_text := J.detect(instruction):
+    if binary_text := J.detect(instruction,error_handler):
         return binary_text
     
     return ""
@@ -23,15 +26,13 @@ def main():
     if len(sys.argv) < 3:
         print("Se necesitan dos argumentos: el archivo de entrada y de salida")
         print("Ejemplo: main.py archivo_entrada.extension archivo_salida.extension")
-        name_input = "test.asm"
-        name_output = "out.txt"
-    else:
-        name_input = sys.argv[1]
-        name_output = sys.argv[2]
 
-        
+        return
 
-    instructions , is_ok = Lexer.getInstructionsFrom(name_input)
+    name_input = sys.argv[1]
+    name_output = sys.argv[2]
+
+    instructions , is_ok = Lexer.getInstructionsFrom(name_input,error_handler)
 
     if not is_ok:
         return

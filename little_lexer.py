@@ -1,3 +1,5 @@
+import string
+
 class Instruction:
     __all__ = ['isEmpty','verify']
 
@@ -24,7 +26,7 @@ class Instruction:
             return
 
 
-    def __init__(self,line,column,valid_instr,label_dictionary):
+    def __init__(self,line,column,valid_instr,label_dictionary,callback_error):
         self.elements = []
         self.next_index = 0
         self.line = line
@@ -45,7 +47,7 @@ class Instruction:
             if current.isspace(): #Ignorar espacios vacios
                 continue
 
-            if current == '/':
+            if current == ';':
                 break
             
             if save: #Guardar valor?
@@ -68,7 +70,8 @@ class Instruction:
                     if not save["value"] in label_dictionary:
                         label_dictionary[save["value"]] = valid_instr
                     else:
-                        print("({0},{1}) la etiqueta '{2}' ya habia sido especificada".format(self.column,self.next_index - (len(save["value"])),save["value"]))
+                        callback_error("({0},{1}) The label '{2}' has already been defined".format(self.column,self.next_index - (len(save["value"])),save["value"]))
+
                         self.is_correct = False
                     save = {}
                     continue
@@ -77,7 +80,7 @@ class Instruction:
                     first = False
                 else:
                     self.is_correct = False
-                    print("({0},{1}) caracter inesperado: ".format(self.column,self.next_index - 1),current)
+                    callback_error("({0},{1}) unexpected character '{2}'".format(self.column,self.next_index - 1,current))
                     break
             
             if current.isnumeric() or current == '-' or current == '#': #Leer un numero
@@ -118,19 +121,22 @@ class Instruction:
                 save = {"value":data,"type":"register"}
             else:
                 self.is_correct = False
-                print("({0},{1}) caracter inesperado: ".format(self.column,self.next_index - 1),current)
+                callback_error("({0},{1}) unexpected character '{2}'".format(self.column,self.next_index - 1,current))
 
 
         if save:
             self.elements.append(save)
 
     def verify(self,grammar):
-        for element in self.elements:
-            print("a")
+        for index, element in enumerate(self.elements):
+            if grammar[index] == element['type']:
+                continue
+            raise Exception("The line isn't valid, The expected format for {0} is (" + ' '.join( x for x in grammar) + ')')
+
     def isEmpty(self):
         return len(self.elements) == 0
 
-def labelToImmediate(instructions,label_dictionary):
+def labelToImmediate(instructions,label_dictionary,callback_error):
     for from_index,instr in enumerate(instructions):
         #Obtener los indices de los elementos en la instruccion que sean una label
         indexes = [i for i, element in enumerate(instr.elements) if element["type"]=="label"]
@@ -142,11 +148,12 @@ def labelToImmediate(instructions,label_dictionary):
             try:
                 to_index = label_dictionary[element["value"]]
             except KeyError as e:
-                print("({0}) La etiqueta '{1}' no esta definida".format(instr.column,element["value"]))
+                callback_error("({0}) La etiqueta '{1}' no esta definida".format(instr.column,element["value"]))
                 return False
             if(instruction == "beq" or instruction == "bne" or instruction == "bgtz"):
                 offset = to_index  - (from_index + 1)
                 element["value"] = str(offset)
+                print(offset)
             else:
                 element["value"] = str(to_index)
             
@@ -154,7 +161,7 @@ def labelToImmediate(instructions,label_dictionary):
         
     return True
 
-def getInstructionsFrom(file):
+def getInstructionsFrom(file, callback_error):
     instructions = []
     label_dictionary = {}
 
@@ -168,10 +175,9 @@ def getInstructionsFrom(file):
     valid_instr = 0
     is_ok = True
     for column,line in enumerate(file_input):
-        instr = Instruction(line.lower(),column,valid_instr,label_dictionary)
+        instr = Instruction(line.lower(),column,valid_instr,label_dictionary,callback_error)
 
         if not instr.isEmpty():
-            print(instr.elements)
             instructions.append(instr)
             valid_instr += 1
 
@@ -181,7 +187,26 @@ def getInstructionsFrom(file):
 
     file_input.close()
 
-    print(label_dictionary)
-    labelToImmediate(instructions,label_dictionary)
+    labelToImmediate(instructions,label_dictionary,callback_error)
+
+    return instructions, is_ok
+
+def getInstructionFromString(str : str, callback_error):
+    instructions = []
+    label_dictionary = {}
+
+    valid_instr = 0
+    is_ok = True
+    for column,line in enumerate(str.splitlines()):
+        instr = Instruction(line.lower(),column,valid_instr,label_dictionary,callback_error)
+
+        if not instr.isEmpty():
+            instructions.append(instr)
+            valid_instr += 1
+
+            if not instr.is_correct:
+                is_ok = False
+
+    labelToImmediate(instructions,label_dictionary,callback_error)
 
     return instructions, is_ok
